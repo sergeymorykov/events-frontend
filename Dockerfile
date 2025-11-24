@@ -3,26 +3,23 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Копируем зависимости
 COPY package*.json ./
 RUN npm ci
 
-# Копируем исходный код
 COPY . .
-
-# Собираем с учётом переменных окружения
-# Vite подставляет VITE_* переменные на этапе сборки
-ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Production stage: запуск статического сервера
+FROM node:18-alpine
 
-# Копируем собранные файлы
-COPY --from=builder /app/dist /usr/share/nginx/html
+WORKDIR /app
+
+# Устанавливаем только serve (минималистичный сервер)
+RUN npm install -g serve
+
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"]
+# Запускаем сервер на порту 3000
+CMD ["serve", "-s", "dist", "-l", "3000"]
