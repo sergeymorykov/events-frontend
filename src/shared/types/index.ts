@@ -22,20 +22,18 @@ export interface EventResponse {
 
 export interface UserResponse {
   id: string;
-  email: string;
+  nickname: string; // ✅ Изменено с email
   name: string;
   interests: string[];
 }
 
 export interface UserLogin {
-  email: string;
-  password: string;
+  nickname: string; // ✅ Только nickname (без email/password)
 }
 
 export interface UserRegister {
+  nickname: string; // ✅ Новое поле (3-20 символов, только a-zA-Z0-9_)
   name: string;
-  email: string;
-  password: string;
 }
 
 export interface EventFilters {

@@ -13,12 +13,12 @@ export const ProfilePage = () => {
           {user && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-600">Имя</p>
-                <p className="text-lg font-medium text-gray-900">{user.name}</p>
+                <p className="text-sm text-gray-600">Никнейм</p>
+                <p className="text-lg font-medium text-gray-900">@{user.nickname}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Email</p>
-                <p className="text-lg font-medium text-gray-900">{user.email}</p>
+                <p className="text-sm text-gray-600">Имя</p>
+                <p className="text-lg font-medium text-gray-900">{user.name}</p>
               </div>
               {user.interests && user.interests.length > 0 && (
                 <div>

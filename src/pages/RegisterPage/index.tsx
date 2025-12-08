@@ -4,9 +4,8 @@ import { useAuth } from '@shared/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export const RegisterPage = () => {
+  const [nickname, setNickname] = useState(''); // ✅ Изменено с email/password
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -16,11 +15,11 @@ export const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await register({ name, email, password });
+      await register({ nickname, name }); // ✅ nickname + name
       toast.success('Регистрация выполнена успешно');
       navigate('/');
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Ошибка регистрации');
+      toast.error(error?.response?.data?.detail || 'Ошибка регистрации');
     } finally {
       setLoading(false);
     }
@@ -35,7 +34,29 @@ export const RegisterPage = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm space-y-3">
+            <div>
+              <label htmlFor="nickname" className="sr-only">
+                Никнейм
+              </label>
+              <input
+                id="nickname"
+                name="nickname"
+                type="text"
+                autoComplete="username"
+                required
+                minLength={3}
+                maxLength={20}
+                pattern="^[a-zA-Z0-9_]+$"
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="username_123"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                3-20 символов, только латиница, цифры и подчеркивание
+              </p>
+            </div>
             <div>
               <label htmlFor="name" className="sr-only">
                 Имя
@@ -46,42 +67,10 @@ export const RegisterPage = () => {
                 type="text"
                 autoComplete="name"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Имя"
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Иван Иванов"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Пароль
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>

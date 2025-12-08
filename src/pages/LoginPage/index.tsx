@@ -4,8 +4,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState(''); // ✅ Изменено с email
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -15,11 +14,11 @@ export const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login({ email, password });
+      await login({ nickname }); // ✅ Только nickname
       toast.success('Вход выполнен успешно');
       navigate('/');
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Ошибка входа');
+      toast.error(error?.response?.data?.detail || 'Неверный nickname');
     } finally {
       setLoading(false);
     }
@@ -34,38 +33,28 @@ export const LoginPage = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="rounded-md shadow-sm">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email
+              <label htmlFor="nickname" className="sr-only">
+                Никнейм
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="nickname"
+                name="nickname"
+                type="text"
+                autoComplete="username"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                minLength={3}
+                maxLength={20}
+                pattern="^[a-zA-Z0-9_]+$"
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="username_123"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
               />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Пароль
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <p className="mt-2 text-xs text-gray-500">
+                3-20 символов, только латиница, цифры и подчеркивание
+              </p>
             </div>
           </div>
 
