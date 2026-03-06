@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@widgets/Header';
 import { useEventActions } from '@shared/hooks/useEventActions';
@@ -11,6 +11,8 @@ import { FaHeart, FaRegHeart, FaThumbsDown, FaRegThumbsDown, FaCheckCircle, FaRe
 import type { EventResponse } from '@shared/types';
 import toast from 'react-hot-toast';
 
+const IMAGE_SWIPE_THRESHOLD = 40;
+
 export const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,6 +24,9 @@ export const EventDetailPage = () => {
   const [initialLiked, setInitialLiked] = useState(false);
   const [initialDisliked, setInitialDisliked] = useState(false);
   const [initialParticipating, setInitialParticipating] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (event) {
@@ -60,9 +65,81 @@ export const EventDetailPage = () => {
     fetchEvent();
   }, [id]);
 
+  const imageUrls = useMemo(() => {
+    if (!event) {
+      return [];
+    }
+
+    const uniquePaths = new Set<string>([
+      ...event.image_urls,
+      ...(event.image_url ? [event.image_url] : []),
+    ]);
+
+    return Array.from(uniquePaths)
+      .map((path) => buildEventImageUrl(path))
+      .filter((url): url is string => Boolean(url));
+  }, [event]);
+
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [id, imageUrls.length]);
+
+  const hasImage = imageUrls.length > 0;
+  const hasMultipleImages = imageUrls.length > 1;
+  const safeImageIndex = hasImage ? Math.min(currentImageIndex, imageUrls.length - 1) : 0;
+  const currentImageUrl = hasImage ? imageUrls[safeImageIndex] : null;
+
+  const handlePrevImage = () => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    setCurrentImageIndex((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+  };
+
+  const handleNextImage = () => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    setCurrentImageIndex((prev) => (prev + 1) % imageUrls.length);
+  };
+
+  const handleImageTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+  };
+
+  const handleImageTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultipleImages || touchStartXRef.current === null || touchStartYRef.current === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartXRef.current;
+    const deltaY = touch.clientY - touchStartYRef.current;
+    const isHorizontalSwipe =
+      Math.abs(deltaX) > IMAGE_SWIPE_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY);
+
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    if (!isHorizontalSwipe) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      handleNextImage();
+      return;
+    }
+
+    handlePrevImage();
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
@@ -76,7 +153,7 @@ export const EventDetailPage = () => {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
@@ -93,14 +170,10 @@ export const EventDetailPage = () => {
     );
   }
 
-  // Определяем путь к изображению: приоритет у image_urls[0], затем image_url
-  const imagePath = event.image_urls?.[0] || event.image_url;
-  const imageUrl = buildEventImageUrl(imagePath);
-  const hasImage = Boolean(imageUrl);
   const scheduleText = formatSchedule(event.schedule) || event.date || 'Дата уточняется';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <button
@@ -111,26 +184,69 @@ export const EventDetailPage = () => {
         </button>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="aspect-video w-full bg-gray-200">
+          <div className="w-full bg-black">
             {hasImage ? (
-              <img
-                src={imageUrl || undefined}
-                alt={event.title || 'Мероприятие'}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    'https://via.placeholder.com/800x450?text=Event';
-                }}
-              />
+              <div
+                className="relative w-full touch-pan-y"
+                onTouchStart={handleImageTouchStart}
+                onTouchEnd={handleImageTouchEnd}
+              >
+                <img
+                  src={currentImageUrl || undefined}
+                  alt={event.title || 'Мероприятие'}
+                  className="w-full h-auto object-contain object-center"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      'https://via.placeholder.com/800x450?text=Event';
+                  }}
+                  draggable={false}
+                />
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handlePrevImage}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 px-3 py-2 text-white transition-colors hover:bg-black/70"
+                      aria-label="Предыдущее изображение"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextImage}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 px-3 py-2 text-white transition-colors hover:bg-black/70"
+                      aria-label="Следующее изображение"
+                    >
+                      ›
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/50 px-3 py-2">
+                      {imageUrls.map((_, index) => {
+                        const isActive = index === safeImageIndex;
+                        return (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                              isActive ? 'bg-white' : 'bg-white/40 hover:bg-white/70'
+                            }`}
+                            aria-label={`Перейти к изображению ${index + 1}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <div className="flex min-h-[280px] w-full items-center justify-center text-gray-400">
                 Нет изображения
               </div>
             )}
           </div>
 
           <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h1 className="mb-4 text-2xl font-bold text-gray-900 sm:text-3xl">
               {event.title || 'Без названия'}
             </h1>
 
@@ -175,10 +291,10 @@ export const EventDetailPage = () => {
             </div>
 
             {isAuthenticated && (
-              <div className="flex gap-4 pt-4 border-t">
+              <div className="flex flex-wrap gap-3 border-t pt-4">
                 <button
                   onClick={toggleLike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
                     isLiked
                       ? 'bg-red-100 text-red-600 hover:bg-red-200'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -191,7 +307,7 @@ export const EventDetailPage = () => {
 
                 <button
                   onClick={toggleDislike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
                     isDisliked
                       ? 'bg-gray-800 text-white hover:bg-gray-900'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -204,7 +320,7 @@ export const EventDetailPage = () => {
 
                 <button
                   onClick={toggleParticipation}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
                     isParticipating
                       ? 'bg-green-100 text-green-600 hover:bg-green-200'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

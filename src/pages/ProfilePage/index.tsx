@@ -1,11 +1,15 @@
 import { Header } from '@widgets/Header';
 import { useAuth } from '@shared/hooks/useAuth';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useEventActionsStore } from '@app/store/useEventActionsStore';
 
 export const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, loadUser } = useAuth();
   const actionsByEvent = useEventActionsStore((state) => state.actionsByEvent);
+
+  useEffect(() => {
+    void loadUser();
+  }, [loadUser]);
 
   const counters = useMemo(() => {
     const values = Object.values(actionsByEvent);
@@ -22,7 +26,7 @@ export const ProfilePage = () => {
   }, [actionsByEvent]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm p-6">

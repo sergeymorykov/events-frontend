@@ -9,15 +9,14 @@ import type { EventFilters as EventFiltersType } from '@shared/types';
 export const EventsPage = () => {
   const [filters, setFilters] = useState<EventFiltersType>({});
   const [categories, setCategories] = useState<string[]>([]);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const { 
     events,
     loading, 
     error, 
     hasMore, 
     isLoadingMore, 
-    loadMore, 
-    loadPrevious, 
-    prevCursor 
+    loadMore
   } = useEvents(filters);
   
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -54,29 +53,26 @@ export const EventsPage = () => {
   }, [hasMore, loading, isLoadingMore, loadMore]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mb-4 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsFiltersOpen((prev) => !prev)}
+            className="w-full rounded-md bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-50"
+            aria-label={isFiltersOpen ? 'Скрыть фильтры' : 'Показать фильтры'}
+          >
+            {isFiltersOpen ? 'Скрыть фильтры' : 'Показать фильтры'}
+          </button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
+          <div className={`${isFiltersOpen ? 'block' : 'hidden'} lg:col-span-1 lg:block`}>
             <div className="sticky top-20">
               <EventFilters categories={categories} onFiltersChange={setFilters} />
             </div>
           </div>
           <div className="lg:col-span-3">
-            {/* Previous Page Button */}
-            {prevCursor && (
-              <div className="mb-4">
-                <button
-                  onClick={loadPrevious}
-                  disabled={isLoadingMore}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isLoadingMore ? 'Загрузка...' : 'Загрузить предыдущие'}
-                </button>
-              </div>
-            )}
-
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, index) => (

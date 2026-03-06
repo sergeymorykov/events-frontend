@@ -1,26 +1,63 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import toast from 'react-hot-toast';
 import { toApiError } from '@shared/api';
+import { track } from '@shared/lib/analytics';
+import { betaConsentContent, isBetaConsentRequired } from '@shared/config/betaConsent';
 
 export const RegisterPage = () => {
-  const [nickname, setNickname] = useState(''); // ✅ Изменено с email/password
+  const [nickname, setNickname] = useState('');
   const [name, setName] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!isBetaConsentRequired) {
+      return;
+    }
+
+    track('beta_consent_viewed');
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isBetaConsentRequired && !termsAccepted) {
+      setFormError(betaConsentContent.requiredError);
+      track('beta_registration_rejected_terms', { source: 'client_validation' });
+      return;
+    }
+
+    setFormError('');
+    if (isBetaConsentRequired) {
+      track('beta_registration_submitted');
+    }
+
     setLoading(true);
 
     try {
-      await register({ nickname, name }); // ✅ nickname + name
+      await register({
+        nickname,
+        name,
+        termsAccepted: isBetaConsentRequired ? termsAccepted : undefined,
+      });
       toast.success('Регистрация выполнена успешно');
       navigate('/');
     } catch (error) {
-      toast.error(toApiError(error).message || 'Ошибка регистрации');
+      const apiError = toApiError(error);
+
+      if (apiError.status === 400) {
+        setFormError(apiError.message || betaConsentContent.requiredError);
+        if (isBetaConsentRequired) {
+          track('beta_registration_rejected_terms', { source: 'backend_400' });
+        }
+      } else {
+        setFormError(betaConsentContent.fallbackError);
+      }
     } finally {
       setLoading(false);
     }
@@ -69,20 +106,48 @@ export const RegisterPage = () => {
                 autoComplete="name"
                 required
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Иван Иванов"
+                placeholder="Ник"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
           </div>
 
+          {isBetaConsentRequired && (
+            <div className="rounded-md border border-indigo-100 bg-indigo-50 p-4">
+              <p className="text-sm font-semibold text-indigo-900">{betaConsentContent.title}</p>
+              <p className="mt-2 text-sm text-indigo-900">{betaConsentContent.notice}</p>
+              <label
+                htmlFor="termsAccepted"
+                className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-indigo-900"
+              >
+                <input
+                  id="termsAccepted"
+                  name="termsAccepted"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => {
+                    setTermsAccepted(e.target.checked);
+                    setFormError('');
+                    track('beta_consent_toggled', { checked: e.target.checked });
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  aria-label={betaConsentContent.checkboxLabel}
+                />
+                <span>{betaConsentContent.checkboxLabel}</span>
+              </label>
+            </div>
+          )}
+
+          {formError && <p className="text-sm text-red-600">{formError}</p>}
+
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isBetaConsentRequired && !termsAccepted)}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {loading ? 'Регистрация...' : isBetaConsentRequired ? 'Принять участие' : 'Зарегистрироваться'}
             </button>
           </div>
 

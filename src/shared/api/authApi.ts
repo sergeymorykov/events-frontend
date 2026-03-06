@@ -1,6 +1,12 @@
 import api from './axios';
 import type { AuthResponse, LoginResponse, UserLogin, UserRegister } from '../types';
 
+interface RegisterPayload {
+  nickname: string;
+  name: string;
+  terms_accepted?: boolean;
+}
+
 export const authApi = {
   // ✅ Логин теперь только по nickname
   login: async (credentials: UserLogin): Promise<LoginResponse> => {
@@ -14,8 +20,17 @@ export const authApi = {
 
   // ✅ Регистрация с nickname вместо email/password
   register: async (userData: UserRegister): Promise<LoginResponse> => {
+    const registerPayload: RegisterPayload = {
+      nickname: userData.nickname,
+      name: userData.name,
+    };
+
+    if (typeof userData.termsAccepted === 'boolean') {
+      registerPayload.terms_accepted = userData.termsAccepted;
+    }
+
     // Step 1: Register user (nickname + name)
-    await api.post('/auth/register', userData);
+    await api.post('/auth/register', registerPayload);
     
     // Step 2: Login with nickname
     const loginData = await api.post<AuthResponse>('/auth/login', {

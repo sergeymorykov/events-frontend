@@ -18,14 +18,14 @@ export const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
   return (
     <Link
       to={`/event/${event.id}`}
-      className={`block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${className || ''}`}
+      className={`flex h-full flex-col rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md ${className || ''}`}
     >
       <div className="aspect-video w-full bg-gray-200 rounded-t-lg overflow-hidden">
         {hasImage ? (
           <img
             src={imageUrl || undefined}
             alt={event.image_caption || event.title || 'Мероприятие'}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain object-center"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 'https://via.placeholder.com/400x225?text=Event';
@@ -37,43 +37,46 @@ export const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
           </div>
         )}
       </div>
-      <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-          {event.title || 'Без названия'}
-        </h3>
-        {event.location && <p className="text-sm text-gray-700 mb-1">{event.location}</p>}
-        {event.address && <p className="text-sm text-gray-500 mb-1">{event.address}</p>}
-        <p className="text-sm text-gray-600 mb-2">{scheduleText}</p>
-        <p className="text-sm font-medium text-indigo-600 mb-2">
-          {formatPrice(event.price)}
-        </p>
-        {event.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {event.categories.slice(0, 3).map((category) => (
-              <span
-                key={category}
-                className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded"
-              >
-                {category}
-              </span>
-            ))}
-          </div>
-        )}
-        
-        {/* User Actions Display */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-3">
-            <div className={`flex items-center ${event.user_actions.includes('like') ? 'text-green-600' : 'text-gray-400'}`}>
-              <FaThumbsUp className="text-xs" />
-              <span className="ml-1 text-xs">Нравится</span>
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex-1">
+          <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-gray-900">
+            {event.title || 'Без названия'}
+          </h3>
+          {event.location && <p className="mb-1 text-sm text-gray-700">{event.location}</p>}
+          {event.address && <p className="mb-1 text-sm text-gray-500">{event.address}</p>}
+          <p className="text-sm text-gray-600">{scheduleText}</p>
+        </div>
+
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-medium text-indigo-600">{formatPrice(event.price)}</p>
+
+          {event.categories.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-1">
+              {event.categories.slice(0, 3).map((category) => (
+                <span
+                  key={category}
+                  className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700"
+                >
+                  {category}
+                </span>
+              ))}
             </div>
-            <div className={`flex items-center ${event.user_actions.includes('dislike') ? 'text-red-600' : 'text-gray-400'}`}>
-              <FaThumbsDown className="text-xs" />
-              <span className="ml-1 text-xs">Не нравится</span>
-            </div>
-            <div className={`flex items-center ${event.user_actions.includes('participate') ? 'text-blue-600' : 'text-gray-400'}`}>
-              <FaCalendarPlus className="text-xs" />
-              <span className="ml-1 text-xs">Участвую</span>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={`flex items-center ${event.user_actions.includes('like') ? 'text-green-600' : 'text-gray-400'}`}>
+                <FaThumbsUp className="text-xs" />
+                <span className="ml-1 text-xs">Нравится</span>
+              </div>
+              <div className={`flex items-center ${event.user_actions.includes('dislike') ? 'text-red-600' : 'text-gray-400'}`}>
+                <FaThumbsDown className="text-xs" />
+                <span className="ml-1 text-xs">Не нравится</span>
+              </div>
+              <div className={`flex items-center ${event.user_actions.includes('participate') ? 'text-blue-600' : 'text-gray-400'}`}>
+                <FaCalendarPlus className="text-xs" />
+                <span className="ml-1 text-xs">Участвую</span>
+              </div>
             </div>
           </div>
         </div>

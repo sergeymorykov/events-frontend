@@ -71,6 +71,7 @@ export interface UserLogin {
 export interface UserRegister {
   nickname: string; // ✅ Новое поле (3-20 символов, только a-zA-Z0-9_)
   name: string;
+  termsAccepted?: boolean;
 }
 
 export interface EventFilters {

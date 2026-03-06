@@ -23,6 +23,12 @@ const actionLabels: Record<EventAction, string> = {
   participate: 'Вы будете участвовать',
 };
 
+const isRatedForSwipe = (event: EventResponse): boolean =>
+  event.user_actions.includes('like') || event.user_actions.includes('dislike');
+
+const filterSwipeableEvents = (items: EventResponse[]): EventResponse[] =>
+  items.filter((event) => !isRatedForSwipe(event));
+
 const callCreateAction = async (eventId: string, action: EventAction) => {
   if (action === 'like') return eventsApi.likeEvent(eventId);
   if (action === 'dislike') return eventsApi.dislikeEvent(eventId);
@@ -67,7 +73,11 @@ export const useSwipeQueue = () => {
   const appendBatch = useCallback(
     (batch: EventResponse[]) => {
       batch.forEach((event) => mergeServerActions(event.id, event.user_actions));
-      setEvents((prev) => [...prev, ...batch]);
+      const swipeableBatch = filterSwipeableEvents(batch);
+      if (swipeableBatch.length === 0) {
+        return;
+      }
+      setEvents((prev) => [...prev, ...swipeableBatch]);
     },
     [mergeServerActions]
   );
@@ -87,7 +97,7 @@ export const useSwipeQueue = () => {
       if (!mountedRef.current) return;
 
       data.items.forEach((event) => mergeServerActions(event.id, event.user_actions));
-      setEvents(data.items);
+      setEvents(filterSwipeableEvents(data.items));
       setNextCursor(data.next_cursor);
       setCurrentIndex(0);
     } catch (error) {
@@ -155,6 +165,7 @@ export const useSwipeQueue = () => {
   }, [currentIndex, events.length, isLoadingMore, loadMore, nextCursor]);
 
   const currentEvent = useMemo(() => events[currentIndex] || null, [currentIndex, events]);
+  const nextEvent = useMemo(() => events[currentIndex + 1] || null, [currentIndex, events]);
 
   const moveToNext = useCallback(() => {
     setCurrentIndex((prev) => prev + 1);
@@ -237,6 +248,7 @@ export const useSwipeQueue = () => {
 
   return {
     currentEvent,
+    nextEvent,
     loading,
     isLoadingMore,
     isActionInFlight,
