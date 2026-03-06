@@ -1,4 +1,5 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
+import { toApiError } from './apiError';
 
 // В dev режиме используем прокси через Vite, в production - прямой URL
 const getBaseURL = () => {
@@ -28,12 +29,14 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+  (error) => {
+    const apiError = toApiError(error);
+
+    if (apiError.status === 401) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
     }
-    return Promise.reject(error);
+
+    return Promise.reject(apiError);
   }
 );
 

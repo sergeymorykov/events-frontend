@@ -1,18 +1,8 @@
 import { Link } from 'react-router-dom';
 import { FaThumbsUp, FaThumbsDown, FaCalendarPlus } from 'react-icons/fa';
-import { formatDate, formatPrice } from '@shared/lib/utils';
+import { formatSchedule } from '@shared/lib/formatSchedule';
+import { buildEventImageUrl, formatPrice } from '@shared/lib/utils';
 import type { EventResponse } from '@shared/types';
-
-const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
-
-// Вспомогательная функция для безопасной сборки URL изображения
-const buildImageUrl = (path: string | undefined | null): string | null => {
-  if (!path) return null;
-
-  const basePath = API_BASE_URL.replace(/\/+$/, ''); // убираем завершающие слэши
-  const cleanPath = path.replace(/^\/+/, '');       // убираем начальные слэши
-  return `${basePath}/images/${cleanPath}`;
-};
 
 interface EventCardProps {
   event: EventResponse;
@@ -21,9 +11,10 @@ interface EventCardProps {
 
 export const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
   const imagePath = event.image_urls?.[0] || event.image_url;
-  const imageUrl = buildImageUrl(imagePath);
+  const imageUrl = buildEventImageUrl(imagePath);
   const hasImage = Boolean(imageUrl);
-  console.log(imageUrl)
+  const scheduleText = formatSchedule(event.schedule) || event.date || 'Дата уточняется';
+
   return (
     <Link
       to={`/event/${event.id}`}
@@ -50,7 +41,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
           {event.title || 'Без названия'}
         </h3>
-        <p className="text-sm text-gray-600 mb-2">{formatDate(event.date)}</p>
+        {event.location && <p className="text-sm text-gray-700 mb-1">{event.location}</p>}
+        {event.address && <p className="text-sm text-gray-500 mb-1">{event.address}</p>}
+        <p className="text-sm text-gray-600 mb-2">{scheduleText}</p>
         <p className="text-sm font-medium text-indigo-600 mb-2">
           {formatPrice(event.price)}
         </p>

@@ -18,3 +18,14 @@ export const formatPrice = (price: { amount: number | null; currency: string | n
   return `${price.amount} ${price.currency || '₽'}`;
 };
 
+export const buildEventImageUrl = (path: string | undefined | null): string | null => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+  if (!path || !apiBaseUrl) {
+    return null;
+  }
+
+  const basePath = apiBaseUrl.replace(/\/+$/, '');
+  const cleanPath = path.replace(/^\/+/, '');
+  return `${basePath}/images/${cleanPath}`;
+};
+

@@ -1,8 +1,25 @@
 import { Header } from '@widgets/Header';
 import { useAuth } from '@shared/hooks/useAuth';
+import { useMemo } from 'react';
+import { useEventActionsStore } from '@app/store/useEventActionsStore';
 
 export const ProfilePage = () => {
   const { user } = useAuth();
+  const actionsByEvent = useEventActionsStore((state) => state.actionsByEvent);
+
+  const counters = useMemo(() => {
+    const values = Object.values(actionsByEvent);
+
+    return values.reduce(
+      (acc, actions) => {
+        if (actions.includes('like')) acc.likes += 1;
+        if (actions.includes('dislike')) acc.dislikes += 1;
+        if (actions.includes('participate')) acc.participates += 1;
+        return acc;
+      },
+      { likes: 0, dislikes: 0, participates: 0 }
+    );
+  }, [actionsByEvent]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -35,6 +52,17 @@ export const ProfilePage = () => {
                   </div>
                 </div>
               )}
+
+              <div>
+                <p className="text-sm text-gray-600 mb-2">Ваши действия</p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <div className="rounded-md bg-green-50 px-3 py-2 text-green-700">Лайки: {counters.likes}</div>
+                  <div className="rounded-md bg-red-50 px-3 py-2 text-red-700">Дизлайки: {counters.dislikes}</div>
+                  <div className="rounded-md bg-indigo-50 px-3 py-2 text-indigo-700">
+                    Участвую: {counters.participates}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

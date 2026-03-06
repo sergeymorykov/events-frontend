@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { toApiError } from '@shared/api';
 
 export const LoginPage = () => {
   const [nickname, setNickname] = useState(''); // ✅ Изменено с email
@@ -17,8 +18,8 @@ export const LoginPage = () => {
       await login({ nickname }); // ✅ Только nickname
       toast.success('Вход выполнен успешно');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.detail || 'Неверный nickname');
+    } catch (error) {
+      toast.error(toApiError(error).message || 'Неверный nickname');
     } finally {
       setLoading(false);
     }

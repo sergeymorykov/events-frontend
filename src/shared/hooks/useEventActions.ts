@@ -1,89 +1,148 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { eventsApi } from '@shared/api/eventsApi';
 import toast from 'react-hot-toast';
+import { toApiError } from '@shared/api';
+import { useEventActionsStore } from '@app/store/useEventActionsStore';
+import type { EventAction } from '@shared/types';
 
-interface EventActionsState {
-  isLiked: boolean;
-  isDisliked: boolean;
-  isParticipating: boolean;
+interface UseEventActionsOptions {
+  showToasts?: boolean;
 }
 
 export const useEventActions = (
   eventId: string,
   initialLiked: boolean = false,
   initialDisliked: boolean = false,
-  initialParticipating: boolean = false
+  initialParticipating: boolean = false,
+  options?: UseEventActionsOptions
 ) => {
-  const [state, setState] = useState<EventActionsState>({
-    isLiked: initialLiked,
-    isDisliked: initialDisliked,
-    isParticipating: initialParticipating,
-  });
+  const showToasts = options?.showToasts ?? true;
+  const setActions = useEventActionsStore((state) => state.setActions);
+  const applyAction = useEventActionsStore((state) => state.applyAction);
+  const eventActionsFromStore = useEventActionsStore((state) => state.actionsByEvent[eventId]);
+
+  const initialActions = useMemo(() => {
+    const actions: EventAction[] = [];
+
+    if (initialLiked) {
+      actions.push('like');
+    }
+
+    if (initialDisliked) {
+      actions.push('dislike');
+    }
+
+    if (initialParticipating) {
+      actions.push('participate');
+    }
+
+    return actions;
+  }, [initialDisliked, initialLiked, initialParticipating]);
 
   useEffect(() => {
-    setState({
-      isLiked: initialLiked,
-      isDisliked: initialDisliked,
-      isParticipating: initialParticipating,
-    });
-  }, [initialLiked, initialDisliked, initialParticipating]);
+    if (!eventId) {
+      return;
+    }
+
+    if (eventActionsFromStore !== undefined) {
+      return;
+    }
+
+    setActions(eventId, initialActions);
+  }, [eventActionsFromStore, eventId, initialActions, setActions]);
+
+  const storeActions = eventActionsFromStore || initialActions;
+
+  const isLiked = storeActions.includes('like');
+  const isDisliked = storeActions.includes('dislike');
+  const isParticipating = storeActions.includes('participate');
+
+  const rollbackTo = (actions: EventAction[]) => {
+    setActions(eventId, actions);
+  };
 
   const toggleLike = async () => {
-    const previousState = state.isLiked;
-    setState((prev) => ({ ...prev, isLiked: !prev.isLiked, isDisliked: false }));
+    if (!eventId) return;
+    const previousActions = [...storeActions];
+    const nextEnabled = !isLiked;
+    applyAction(eventId, 'like', nextEnabled);
 
     try {
-      if (previousState) {
-        await eventsApi.unlikeEvent(eventId);
-        toast.success('Лайк удален');
-      } else {
+      if (nextEnabled) {
         await eventsApi.likeEvent(eventId);
-        toast.success('Мероприятие добавлено в избранное');
+        if (showToasts) {
+          toast.success('Мероприятие добавлено в избранное');
+        }
+      } else {
+        await eventsApi.unlikeEvent(eventId);
+        if (showToasts) {
+          toast.success('Лайк удален');
+        }
       }
     } catch (error) {
-      setState((prev) => ({ ...prev, isLiked: previousState }));
-      toast.error('Ошибка при обновлении лайка');
+      rollbackTo(previousActions);
+      if (showToasts) {
+        toast.error(toApiError(error).message || 'Ошибка при обновлении лайка');
+      }
     }
   };
 
   const toggleDislike = async () => {
-    const previousState = state.isDisliked;
-    setState((prev) => ({ ...prev, isDisliked: !prev.isDisliked, isLiked: false }));
+    if (!eventId) return;
+    const previousActions = [...storeActions];
+    const nextEnabled = !isDisliked;
+    applyAction(eventId, 'dislike', nextEnabled);
 
     try {
-      if (previousState) {
-        await eventsApi.undislikeEvent(eventId);
-        toast.success('Дизлайк удален');
-      } else {
+      if (nextEnabled) {
         await eventsApi.dislikeEvent(eventId);
-        toast.success('Мероприятие скрыто');
+        if (showToasts) {
+          toast.success('Мероприятие скрыто');
+        }
+      } else {
+        await eventsApi.undislikeEvent(eventId);
+        if (showToasts) {
+          toast.success('Дизлайк удален');
+        }
       }
     } catch (error) {
-      setState((prev) => ({ ...prev, isDisliked: previousState }));
-      toast.error('Ошибка при обновлении дизлайка');
+      rollbackTo(previousActions);
+      if (showToasts) {
+        toast.error(toApiError(error).message || 'Ошибка при обновлении дизлайка');
+      }
     }
   };
 
   const toggleParticipation = async () => {
-    const previousState = state.isParticipating;
-    setState((prev) => ({ ...prev, isParticipating: !prev.isParticipating }));
+    if (!eventId) return;
+    const previousActions = [...storeActions];
+    const nextEnabled = !isParticipating;
+    applyAction(eventId, 'participate', nextEnabled);
 
     try {
-      if (previousState) {
-        await eventsApi.cancelParticipation(eventId);
-        toast.success('Участие отменено');
-      } else {
+      if (nextEnabled) {
         await eventsApi.participateEvent(eventId);
-        toast.success('Вы будете участвовать в мероприятии');
+        if (showToasts) {
+          toast.success('Вы будете участвовать в мероприятии');
+        }
+      } else {
+        await eventsApi.cancelParticipation(eventId);
+        if (showToasts) {
+          toast.success('Участие отменено');
+        }
       }
     } catch (error) {
-      setState((prev) => ({ ...prev, isParticipating: previousState }));
-      toast.error('Ошибка при обновлении участия');
+      rollbackTo(previousActions);
+      if (showToasts) {
+        toast.error(toApiError(error).message || 'Ошибка при обновлении участия');
+      }
     }
   };
 
   return {
-    ...state,
+    isLiked,
+    isDisliked,
+    isParticipating,
     toggleLike,
     toggleDislike,
     toggleParticipation,

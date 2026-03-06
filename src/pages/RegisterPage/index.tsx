@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { toApiError } from '@shared/api';
 
 export const RegisterPage = () => {
   const [nickname, setNickname] = useState(''); // ✅ Изменено с email/password
@@ -18,8 +19,8 @@ export const RegisterPage = () => {
       await register({ nickname, name }); // ✅ nickname + name
       toast.success('Регистрация выполнена успешно');
       navigate('/');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.detail || 'Ошибка регистрации');
+    } catch (error) {
+      toast.error(toApiError(error).message || 'Ошибка регистрации');
     } finally {
       setLoading(false);
     }

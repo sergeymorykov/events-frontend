@@ -78,9 +78,18 @@ export const EventsPage = () => {
             )}
 
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                <p className="mt-4 text-gray-600">Загрузка мероприятий...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="overflow-hidden rounded-lg bg-white shadow-sm">
+                    <div className="aspect-video w-full animate-pulse bg-gray-200" />
+                    <div className="space-y-3 p-4">
+                      <div className="h-5 w-3/4 animate-pulse rounded bg-gray-200" />
+                      <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
+                      <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+                      <div className="h-8 w-full animate-pulse rounded bg-gray-100" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="text-center py-12">

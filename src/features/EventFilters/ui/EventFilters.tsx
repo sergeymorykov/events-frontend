@@ -20,17 +20,18 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     searchParams.get('categories')?.split(',').filter(Boolean) || []
   );
+  const [search, setSearch] = useState<string>(searchParams.get('search') || '');
   const [minPrice, setMinPrice] = useState<number | undefined>(
-    searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined
+    searchParams.get('min_price') ? Number(searchParams.get('min_price')) : undefined
   );
   const [maxPrice, setMaxPrice] = useState<number | undefined>(
-    searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined
+    searchParams.get('max_price') ? Number(searchParams.get('max_price')) : undefined
   );
   const [startDate, setStartDate] = useState<Date | null>(
-    searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : null
+    searchParams.get('date_from') ? new Date(searchParams.get('date_from')!) : null
   );
   const [endDate, setEndDate] = useState<Date | null>(
-    searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : null
+    searchParams.get('date_to') ? new Date(searchParams.get('date_to')!) : null
   );
   const [forMyInterests, setForMyInterests] = useState<boolean>(
     searchParams.get('for_my_interests') === 'true'
@@ -41,6 +42,7 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
 
   useEffect(() => {
     const filters: EventFiltersType = {
+      search: search.trim() || undefined,
       categories: selectedCategories.length > 0 ? selectedCategories : undefined,
       min_price: minPrice,
       max_price: maxPrice,
@@ -51,6 +53,9 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
     };
 
     const params = new URLSearchParams();
+    if (search.trim()) {
+      params.set('search', search.trim());
+    }
     if (selectedCategories.length > 0) {
       params.set('categories', selectedCategories.join(','));
     }
@@ -75,7 +80,7 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
 
     setSearchParams(params, { replace: true });
     onFiltersChange(filters);
-  }, [selectedCategories, minPrice, maxPrice, startDate, endDate, forMyInterests, limit, setSearchParams, onFiltersChange]);
+  }, [search, selectedCategories, minPrice, maxPrice, startDate, endDate, forMyInterests, limit, setSearchParams, onFiltersChange]);
 
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories((prev) =>
@@ -88,6 +93,20 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
       <h3 className="text-lg font-semibold">Фильтры</h3>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Поиск
+        </label>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Название, категория..."
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          aria-label="Поиск мероприятий"
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">

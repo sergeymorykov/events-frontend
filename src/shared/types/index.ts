@@ -3,13 +3,46 @@ export interface Price {
   currency: string | null;
 }
 
+export type ScheduleExact = {
+  type: 'exact';
+  date_start: string;
+  date_end?: string | null;
+  timezone?: string;
+};
+
+export type ScheduleRecurringWeekly = {
+  type: 'recurring_weekly';
+  schedule: Record<string, string[]>;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  timezone?: string;
+};
+
+export type ScheduleFuzzy = {
+  type: 'fuzzy';
+  description: string;
+  approximate_start?: string | null;
+  approximate_end?: string | null;
+};
+
+export type EventSchedule = ScheduleExact | ScheduleRecurringWeekly | ScheduleFuzzy;
+
+export type WeightedInterest = {
+  name: string;
+  weight: number;
+};
+
 export interface EventResponse {
   id: string;
   title: string | null;
   description: string | null;
   date: string | null; // ISO 8601 string
+  location?: string | null;
+  address?: string | null;
+  schedule?: EventSchedule | null;
   price: Price | null;
   categories: string[];
+  interests?: WeightedInterest[];
   user_interests: string[];
   image_url: string | null; // DEPRECATED
   image_urls: string[];
@@ -17,8 +50,12 @@ export interface EventResponse {
   source_post_url: string | null;
   processed_at: string | null; // ISO datetime
   raw_post_id: number | null;
-  user_actions: string[]; // "like", "dislike", "participate"
+  user_actions: EventAction[]; // "like", "dislike", "participate"
 }
+
+export type EventItem = EventResponse;
+
+export type EventAction = 'like' | 'dislike' | 'participate';
 
 export interface UserResponse {
   id: string;
@@ -37,6 +74,7 @@ export interface UserRegister {
 }
 
 export interface EventFilters {
+  search?: string;
   categories?: string[];
   min_price?: number;
   max_price?: number;
@@ -57,7 +95,7 @@ export interface LoginResponse {
 }
 
 export interface PaginatedEventsResponse {
-  items: EventResponse[];
+  items: EventItem[];
   next_cursor: string | null;
   prev_cursor: string | null;
 }

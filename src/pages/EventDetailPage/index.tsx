@@ -4,20 +4,12 @@ import { Header } from '@widgets/Header';
 import { useEventActions } from '@shared/hooks/useEventActions';
 import { useAuth } from '@shared/hooks/useAuth';
 import { eventsApi } from '@shared/api/eventsApi';
-import { formatDate, formatPrice } from '@shared/lib/utils';
+import { toApiError } from '@shared/api';
+import { formatSchedule } from '@shared/lib/formatSchedule';
+import { buildEventImageUrl, formatPrice } from '@shared/lib/utils';
 import { FaHeart, FaRegHeart, FaThumbsDown, FaRegThumbsDown, FaCheckCircle, FaRegCheckCircle } from 'react-icons/fa';
 import type { EventResponse } from '@shared/types';
 import toast from 'react-hot-toast';
-
-const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
-
-// Вспомогательная функция для безопасной сборки URL изображения
-const buildImageUrl = (path: string | undefined | null): string | null => {
-  if (!path) return null;
-  const basePath = API_BASE_URL.replace(/\/+$/, '');
-  const cleanPath = path.replace(/^\/+/, '');
-  return `${basePath}/images/${cleanPath}`;
-};
 
 export const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,8 +48,10 @@ export const EventDetailPage = () => {
         const data = await eventsApi.getEvent(id);
         setEvent(data);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Ошибка загрузки мероприятия'));
-        toast.error('Ошибка загрузки мероприятия');
+        const apiError = toApiError(err);
+        const message = apiError.status === 404 ? 'Мероприятие не найдено' : apiError.message;
+        setError(new Error(message));
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -101,8 +95,9 @@ export const EventDetailPage = () => {
 
   // Определяем путь к изображению: приоритет у image_urls[0], затем image_url
   const imagePath = event.image_urls?.[0] || event.image_url;
-  const imageUrl = buildImageUrl(imagePath);
+  const imageUrl = buildEventImageUrl(imagePath);
   const hasImage = Boolean(imageUrl);
+  const scheduleText = formatSchedule(event.schedule) || event.date || 'Дата уточняется';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -140,7 +135,7 @@ export const EventDetailPage = () => {
             </h1>
 
             <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
-              <span>{formatDate(event.date)}</span>
+              <span>{scheduleText}</span>
               <span className="font-medium text-indigo-600">
                 {formatPrice(event.price)}
               </span>
@@ -165,6 +160,19 @@ export const EventDetailPage = () => {
                 <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
               </div>
             )}
+
+            {(event.location || event.address) && (
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Место</h2>
+                {event.location && <p className="text-gray-700">{event.location}</p>}
+                {event.address && <p className="text-gray-600 mt-1">{event.address}</p>}
+              </div>
+            )}
+
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Расписание</h2>
+              <p className="text-gray-700">{scheduleText}</p>
+            </div>
 
             {isAuthenticated && (
               <div className="flex gap-4 pt-4 border-t">

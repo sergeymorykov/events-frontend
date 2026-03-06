@@ -1,12 +1,23 @@
 import api from './axios';
-import type { EventResponse, EventFilters, PaginatedEventsResponse } from '../types';
+import type { EventItem, EventFilters, PaginatedEventsResponse } from '../types';
+
+interface RequestOptions {
+  signal?: AbortSignal;
+}
 
 export const eventsApi = {
-  getEvents: async (filters?: EventFilters, cursor?: string): Promise<PaginatedEventsResponse> => {
+  getEvents: async (
+    filters?: EventFilters,
+    cursor?: string,
+    options?: RequestOptions
+  ): Promise<PaginatedEventsResponse> => {
     // Build params manually to handle multiple category values
     const params = new URLSearchParams();
     
     if (filters) {
+      if (filters.search) {
+        params.append('search', filters.search);
+      }
       if (filters.categories  && filters.categories.length > 0) {
         filters.categories.forEach(cat => params.append('categories', cat));
       }
@@ -34,37 +45,37 @@ export const eventsApi = {
       params.append('cursor', cursor);
     }
     
-    const { data } = await api.get<PaginatedEventsResponse>('/events', { params });
+    const { data } = await api.get<PaginatedEventsResponse>('/events', { params, signal: options?.signal });
     return data;
   },
 
-  getEvent: async (id: string): Promise<EventResponse> => {
-    const { data } = await api.get<EventResponse>(`/events/${id}`);
+  getEvent: async (id: string, options?: RequestOptions): Promise<EventItem> => {
+    const { data } = await api.get<EventItem>(`/events/${id}`, { signal: options?.signal });
     return data;
   },
 
-  likeEvent: async (id: string): Promise<void> => {
-    await api.post(`/events/${id}/like`);
+  likeEvent: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.post(`/events/${id}/like`, undefined, { signal: options?.signal });
   },
 
-  unlikeEvent: async (id: string): Promise<void> => {
-    await api.delete(`/events/${id}/like`);
+  unlikeEvent: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.delete(`/events/${id}/like`, { signal: options?.signal });
   },
 
-  dislikeEvent: async (id: string): Promise<void> => {
-    await api.post(`/events/${id}/dislike`);
+  dislikeEvent: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.post(`/events/${id}/dislike`, undefined, { signal: options?.signal });
   },
 
-  undislikeEvent: async (id: string): Promise<void> => {
-    await api.delete(`/events/${id}/dislike`);
+  undislikeEvent: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.delete(`/events/${id}/dislike`, { signal: options?.signal });
   },
 
-  participateEvent: async (id: string): Promise<void> => {
-    await api.post(`/events/${id}/participate`);
+  participateEvent: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.post(`/events/${id}/participate`, undefined, { signal: options?.signal });
   },
 
-  cancelParticipation: async (id: string): Promise<void> => {
-    await api.delete(`/events/${id}/participate`);
+  cancelParticipation: async (id: string, options?: RequestOptions): Promise<void> => {
+    await api.delete(`/events/${id}/participate`, { signal: options?.signal });
   },
 
   getCategories: async (): Promise<string[]> => {

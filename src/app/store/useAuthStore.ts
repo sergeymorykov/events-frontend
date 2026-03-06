@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { authApi } from '@shared/api/authApi';
 import { userApi } from '@shared/api/userApi';
 import type { UserResponse, UserLogin, UserRegister } from '@shared/types';
+import { useEventActionsStore } from './useEventActionsStore';
 
 interface AuthState {
   token: string | null;
@@ -11,7 +12,10 @@ interface AuthState {
   register: (data: UserRegister) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
+  clearSession: () => void;
 }
+
+const TOKEN_KEY = 'token';
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -21,24 +25,31 @@ export const useAuthStore = create<AuthState>()(
 
       login: async (credentials: UserLogin) => {
         const response = await authApi.login(credentials);
-        localStorage.setItem('token', response.token);
+        localStorage.setItem(TOKEN_KEY, response.token);
         set({ token: response.token, user: response.user });
       },
 
       register: async (data: UserRegister) => {
         const response = await authApi.register(data);
-        localStorage.setItem('token', response.token);
+        localStorage.setItem(TOKEN_KEY, response.token);
         set({ token: response.token, user: response.user });
       },
 
+      clearSession: () => {
+        localStorage.removeItem(TOKEN_KEY);
+        useEventActionsStore.getState().reset();
+        set({ token: null, user: null });
+      },
+
       logout: () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem(TOKEN_KEY);
+        useEventActionsStore.getState().reset();
         set({ token: null, user: null });
       },
 
       loadUser: async () => {
         // This will be called on app initialization if token exists
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
           set({ token: null, user: null });
           return;
@@ -47,9 +58,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await userApi.getCurrentUser();
           set({ token, user });
-        } catch (error) {
+        } catch {
           set({ token: null, user: null });
-          localStorage.removeItem('token');
+          localStorage.removeItem(TOKEN_KEY);
+          useEventActionsStore.getState().reset();
         }
       },
     }),

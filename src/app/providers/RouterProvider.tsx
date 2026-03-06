@@ -6,6 +6,7 @@ import { EventsPage } from '@pages/EventsPage';
 import { EventDetailPage } from '@pages/EventDetailPage';
 import { ProfilePage } from '@pages/ProfilePage';
 import { NotFoundPage } from '@pages/NotFoundPage';
+import { SwipePage } from '@pages/SwipePage';
 import { useEffect } from 'react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -50,7 +51,14 @@ export const RouterProvider = () => {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        <Route path="/" element={<EventsPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <EventsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/login"
           element={
@@ -68,6 +76,14 @@ export const RouterProvider = () => {
           }
         />
         <Route path="/event/:id" element={<EventDetailPage />} />
+        <Route
+          path="/swipe"
+          element={
+            <ProtectedRoute>
+              <SwipePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/profile"
           element={
