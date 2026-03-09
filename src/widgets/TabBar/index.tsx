@@ -18,10 +18,10 @@ export const TabBar = () => {
           className={({ isActive }) =>
             `${baseItemClassName} ${isActive ? activeItemClassName : inactiveItemClassName}`
           }
-          aria-label="Лента"
+          aria-label="Мероприятия"
         >
           <FaCalendarAlt className="h-5 w-5" />
-          <span>Лента</span>
+          <span>Мероприятия</span>
         </NavLink>
         <NavLink
           to="/swipe"

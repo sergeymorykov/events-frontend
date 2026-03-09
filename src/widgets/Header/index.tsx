@@ -21,7 +21,7 @@ export const Header = () => {
               {isAuthenticated ? (
                 <>
                   <Link to="/" className="text-gray-700 hover:text-indigo-600">
-                    Лента
+                    Мероприятия
                   </Link>
                   <Link to="/swipe" className="text-gray-700 hover:text-indigo-600">
                     Свайпы

@@ -2,12 +2,41 @@ version: '3.8'
 
 services:
   frontend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-https://backend-api.sberhubproject.ru}
+        - VITE_BETA_CONSENT_REQUIRED=${VITE_BETA_CONSENT_REQUIRED:-true}
     ports:
-      - "3000:3000"  # теперь и внутри, и снаружи — 3000
+      - "3000:3000"
     environment:
-      - VITE_API_BASE_URL=https://backend-api.sberhubproject.ru
+      - NODE_ENV=production
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+      - /var/tmp:noexec,nosuid,size=32m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - frontend-network
 
