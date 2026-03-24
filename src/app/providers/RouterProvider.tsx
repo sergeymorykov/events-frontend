@@ -51,14 +51,7 @@ export const RouterProvider = () => {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <EventsPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<EventsPage />} />
         <Route
           path="/login"
           element={
@@ -76,14 +69,7 @@ export const RouterProvider = () => {
           }
         />
         <Route path="/event/:id" element={<EventDetailPage />} />
-        <Route
-          path="/swipe"
-          element={
-            <ProtectedRoute>
-              <SwipePage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/swipe" element={<SwipePage />} />
         <Route
           path="/profile"
           element={

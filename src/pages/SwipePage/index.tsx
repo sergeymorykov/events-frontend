@@ -1,7 +1,9 @@
+import { Link } from 'react-router-dom';
 import { Header } from '@widgets/Header';
 import { useMemo, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import { useSwipeQueue } from '@shared/hooks';
+import { useAuth } from '@shared/hooks/useAuth';
 import { buildEventImageUrl, formatDate, formatPrice } from '@shared/lib/utils';
 import type { EventAction, EventResponse } from '@shared/types';
 
@@ -85,6 +87,32 @@ const renderEventCard = (event: EventResponse, options?: RenderEventCardOptions)
 };
 
 export const SwipePage = () => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
+        <Header />
+        <div className="mx-auto flex max-w-md flex-col items-center px-4 py-16 text-center">
+          <h2 className="mb-3 text-xl font-semibold text-gray-900">Свайпы доступны после входа</h2>
+          <p className="mb-6 text-gray-600">
+            Войдите, чтобы оценивать мероприятия и получать персональные рекомендации.
+          </p>
+          <Link
+            to="/login"
+            className="rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Войти
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return <SwipePageContent />;
+};
+
+const SwipePageContent = () => {
   const {
     currentEvent,
     nextEvent,

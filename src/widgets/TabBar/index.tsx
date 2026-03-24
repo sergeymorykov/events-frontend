@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { FaCalendarAlt, FaRandom, FaUser } from 'react-icons/fa';
+import { FaCalendarAlt, FaRandom, FaSignInAlt, FaUser } from 'react-icons/fa';
+import { useAuth } from '@shared/hooks/useAuth';
 
 const baseItemClassName =
   'flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-medium transition-colors';
@@ -7,6 +8,8 @@ const inactiveItemClassName = 'text-gray-500';
 const activeItemClassName = 'text-indigo-600';
 
 export const TabBar = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 backdrop-blur md:hidden"
@@ -33,16 +36,29 @@ export const TabBar = () => {
           <FaRandom className="h-5 w-5" />
           <span>Свайпы</span>
         </NavLink>
-        <NavLink
-          to="/profile"
-          className={({ isActive }) =>
-            `${baseItemClassName} ${isActive ? activeItemClassName : inactiveItemClassName}`
-          }
-          aria-label="Профиль"
-        >
-          <FaUser className="h-5 w-5" />
-          <span>Профиль</span>
-        </NavLink>
+        {isAuthenticated ? (
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              `${baseItemClassName} ${isActive ? activeItemClassName : inactiveItemClassName}`
+            }
+            aria-label="Профиль"
+          >
+            <FaUser className="h-5 w-5" />
+            <span>Профиль</span>
+          </NavLink>
+        ) : (
+          <NavLink
+            to="/login"
+            className={({ isActive }) =>
+              `${baseItemClassName} ${isActive ? activeItemClassName : inactiveItemClassName}`
+            }
+            aria-label="Войти"
+          >
+            <FaSignInAlt className="h-5 w-5" />
+            <span>Войти</span>
+          </NavLink>
+        )}
       </div>
     </nav>
   );

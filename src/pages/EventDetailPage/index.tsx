@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@widgets/Header';
 import { useEventActions } from '@shared/hooks/useEventActions';
-import { useAuth } from '@shared/hooks/useAuth';
+import { useRequireAuth } from '@shared/hooks/useRequireAuth';
 import { eventsApi } from '@shared/api/eventsApi';
 import { toApiError } from '@shared/api';
 import { formatSchedule } from '@shared/lib/formatSchedule';
@@ -16,7 +16,7 @@ const IMAGE_SWIPE_THRESHOLD = 40;
 export const EventDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { requireAuth } = useRequireAuth();
   const [event, setEvent] = useState<EventResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -290,48 +290,46 @@ export const EventDetailPage = () => {
               <p className="text-gray-700">{scheduleText}</p>
             </div>
 
-            {isAuthenticated && (
-              <div className="flex flex-wrap gap-3 border-t pt-4">
-                <button
-                  onClick={toggleLike}
-                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-                    isLiked
-                      ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  aria-label={isLiked ? 'Убрать лайк' : 'Лайкнуть'}
-                >
-                  {isLiked ? <FaHeart /> : <FaRegHeart />}
-                  <span>{isLiked ? 'Лайкнуто' : 'Лайк'}</span>
-                </button>
+            <div className="flex flex-wrap gap-3 border-t pt-4">
+              <button
+                onClick={() => requireAuth(toggleLike)}
+                className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
+                  isLiked
+                    ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                aria-label={isLiked ? 'Убрать лайк' : 'Лайкнуть'}
+              >
+                {isLiked ? <FaHeart /> : <FaRegHeart />}
+                <span>{isLiked ? 'Лайкнуто' : 'Лайк'}</span>
+              </button>
 
-                <button
-                  onClick={toggleDislike}
-                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-                    isDisliked
-                      ? 'bg-gray-800 text-white hover:bg-gray-900'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  aria-label={isDisliked ? 'Убрать дизлайк' : 'Дизлайкнуть'}
-                >
-                  {isDisliked ? <FaThumbsDown /> : <FaRegThumbsDown />}
-                  <span>{isDisliked ? 'Дизлайкнуто' : 'Дизлайк'}</span>
-                </button>
+              <button
+                onClick={() => requireAuth(toggleDislike)}
+                className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
+                  isDisliked
+                    ? 'bg-gray-800 text-white hover:bg-gray-900'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                aria-label={isDisliked ? 'Убрать дизлайк' : 'Дизлайкнуть'}
+              >
+                {isDisliked ? <FaThumbsDown /> : <FaRegThumbsDown />}
+                <span>{isDisliked ? 'Дизлайкнуто' : 'Дизлайк'}</span>
+              </button>
 
-                <button
-                  onClick={toggleParticipation}
-                  className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-                    isParticipating
-                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  aria-label={isParticipating ? 'Отменить участие' : 'Участвовать'}
-                >
-                  {isParticipating ? <FaCheckCircle /> : <FaRegCheckCircle />}
-                  <span>{isParticipating ? 'Участвую' : 'Участвовать'}</span>
-                </button>
-              </div>
-            )}
+              <button
+                onClick={() => requireAuth(toggleParticipation)}
+                className={`flex min-w-[160px] flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
+                  isParticipating
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+                aria-label={isParticipating ? 'Отменить участие' : 'Участвовать'}
+              >
+                {isParticipating ? <FaCheckCircle /> : <FaRegCheckCircle />}
+                <span>{isParticipating ? 'Участвую' : 'Участвовать'}</span>
+              </button>
+            </div>
 
             {event.source_post_url && (
               <div className="mt-6 pt-4 border-t">

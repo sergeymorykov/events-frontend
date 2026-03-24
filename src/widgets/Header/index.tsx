@@ -18,14 +18,14 @@ export const Header = () => {
               Events
             </Link>
             <nav className="flex items-center space-x-4">
+              <Link to="/" className="text-gray-700 hover:text-indigo-600">
+                Мероприятия
+              </Link>
+              <Link to="/swipe" className="text-gray-700 hover:text-indigo-600">
+                Свайпы
+              </Link>
               {isAuthenticated ? (
                 <>
-                  <Link to="/" className="text-gray-700 hover:text-indigo-600">
-                    Мероприятия
-                  </Link>
-                  <Link to="/swipe" className="text-gray-700 hover:text-indigo-600">
-                    Свайпы
-                  </Link>
                   <Link
                     to="/profile"
                     className="text-gray-700 hover:text-indigo-600"
@@ -60,7 +60,7 @@ export const Header = () => {
           </div>
         </div>
       </header>
-      {isAuthenticated && <TabBar />}
+      <TabBar />
     </>
   );
 };

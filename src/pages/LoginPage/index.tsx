@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@shared/hooks/useAuth';
+import { TabBar } from '@widgets/TabBar';
 import toast from 'react-hot-toast';
 import { toApiError } from '@shared/api';
 
@@ -69,16 +70,23 @@ export const LoginPage = () => {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="space-y-2 text-center">
             <Link
               to="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="block font-medium text-indigo-600 hover:text-indigo-500"
             >
               Нет аккаунта? Зарегистрироваться
+            </Link>
+            <Link
+              to="/"
+              className="block text-sm text-gray-500 hover:text-gray-700"
+            >
+              Перейти к мероприятиям →
             </Link>
           </div>
         </form>
       </div>
+      <TabBar />
     </div>
   );
 };
